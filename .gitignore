@@ -5,3 +5,4 @@ out/
 *.log
 *.lock
 binaries/
+.DS_Store
