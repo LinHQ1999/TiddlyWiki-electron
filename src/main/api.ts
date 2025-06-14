@@ -76,7 +76,7 @@ export function InitAPI() {
    */
   ipcMain.handle("save", (_, abspath: string, text: string) => {
     copyFileSync(abspath, abspath + ".old");
-    writeFile(abspath, text, { encoding: "UTF-8" });
+    writeFile(abspath, text, { encoding: "utf-8" });
     return true;
   });
   ipcMain.on("savesync", (ev: IpcMainEvent, abspath: string, text: string) => {
