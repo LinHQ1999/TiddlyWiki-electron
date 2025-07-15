@@ -8,6 +8,7 @@ import { Service, TWService } from "./services";
 import { FileInfo } from "./preloads/main";
 import { ISearchOpts } from "./api";
 import { PathErr } from "./utils";
+import { type MenuWindow } from "./menu";
 
 interface WikiInfo {
   isSingle: boolean;
@@ -387,7 +388,8 @@ export class Wiki {
   /**
    * 通过 BrowserWindow 匹配对应的 wiki 实例
    */
-  static byWindow(win: BrowserWindow): Wiki | null {
+  static byWindow(win: MenuWindow): Wiki | null {
+    if (!win) return null
     for (const wiki of this.wikis) {
       if (wiki.win.id == win.id) {
         return wiki;
