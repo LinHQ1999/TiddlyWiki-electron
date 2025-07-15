@@ -119,9 +119,10 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
         accelerator: "Ctrl+Alt+Shift+F12",
         async click(
           _: MenuItem,
-          win: BrowserWindow,
+          win: MenuWindow,
         ) {
-          win.webContents.openDevTools();
+          if (!win) return
+          (<BrowserWindow>win).webContents.openDevTools();
         },
       },
       { role: "reload" },
