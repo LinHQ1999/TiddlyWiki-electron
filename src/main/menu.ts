@@ -13,6 +13,7 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
     submenu: [
       {
         label: "打开目录",
+        accelerator: "Ctrl+O",
         async click(
           _: MenuItem,
           win: MenuWindow,
@@ -33,6 +34,7 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
       },
       {
         label: "重载服务",
+        accelerator: "Ctrl+Shift+R",
         async click(
           _: MenuItem,
           win: MenuWindow,
@@ -96,6 +98,7 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
       },
       {
         label: "打开所在位置",
+        accelerator: "Ctrl+Shift+O",
         async click(
           _: MenuItem,
           win: MenuWindow,
