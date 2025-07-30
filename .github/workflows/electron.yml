@@ -1,39 +1,63 @@
 name: TD builder
-
 on:
-  push: 
-    tags: 
+  push:
+    tags:
       - '[vV][1-9].*.*'
-
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        node-version: [18.x]
-
+        node-version: [22.x]
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: pnpm/action-setup@v4.1.0
-      with:
-        version: 8.14.0
-        
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4.1.0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - name: Build
+        run: |
+          pnpm install
+          pnpm dist
+      - name: Pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: td-build-${{ matrix.os }}-${{ github.ref_name }}
+          compression-level: 9
+          path: |
+            dist/*.dmg
+            dist/*.exe
+            dist/*.appimage
+            build/*.json
 
-    - name: Build
-      run: | 
-        pnpm install
-        pnpm dist
-
-    - name: Build and release
-      uses: actions/upload-artifact@v4
-      with:
-        name: td-build-${{ github.ref_name }}
-        path: 
-          dist/win-unpacked
-      
+# release:
+#   needs: build
+#   runs-on: ubuntu-latest
+#   env:
+#     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#   steps:
+#     - name: Download all artifacts
+#       uses: actions/download-artifact@v4
+#       with:
+#         path: artifacts
+#     - name: Create Release
+#       uses: softprops/action-gh-release@v1
+#       with:
+#         tag_name: ${{ github.ref_name }}
+#         name: Release ${{ github.ref_name }}
+#         body: |
+#           Automated build for version ${{ github.ref_name }}
+#           - Built on Windows, Linux and macOS
+#         files: |
+#           artifacts/**/*
+#         draft: false
+#         prerelease: false

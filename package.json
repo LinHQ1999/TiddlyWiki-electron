@@ -1,6 +1,6 @@
 {
   "name": "td",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "TW 包装程序",
   "homepage": "https://gitee.com/linhq1999/td",
   "main": "out/index.js",
