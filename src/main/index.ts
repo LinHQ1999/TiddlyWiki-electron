@@ -8,6 +8,7 @@ import { TWService } from "./services";
 import { Wiki } from "./wiki";
 import { handlePathErr } from "./utils";
 import { env } from "process";
+import isDev from "electron-is-dev";
 
 async function loadWiki() {
   try {
@@ -52,7 +53,7 @@ async function loadWiki() {
 }
 
 (async () => {
-  log.transports.file.level = env.DEBUG ? 'warn' : 'info'
+  log.transports.file.level = (env.DEBUG || isDev) ? 'debug' : 'warn'
 
   debug('应用启动')
 
@@ -67,7 +68,6 @@ async function loadWiki() {
   InitAPI();
 
   debug('菜单和 API 初始化完成')
-
 
   loadWiki()
 

@@ -1,70 +1,72 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 
 createRoot(document.getElementById("root")).render(<App />)
 
 function App() {
-  const [input, setInput] = useState('')
-  const [res, setRes] = useState({ loading: false, current: 0, total: 0 })
-  const inputRef = useRef(undefined)
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
+  const debounceRef = useRef()
+
+  const onResult = useEffectEvent((res) => setResult(res))
 
   useEffect(() => {
-    window.SC.onSearch((res) => {
-      setRes({
-        loading: false,
-        current: res.activeMatchOrdinal,
-        total: res.matches,
-      })
-    })
+    const cancel = window.SC?.onResult?.(onResult)
+    return () => cancel()
   }, [])
 
-  function handleBtn(forward = true) {
-    setRes({ ...res, loading: true })
-    window.SC.search({ text: input, opts: { forward } })
+  const debouncedSearch = useCallback((value) => {
+    clearTimeout(debounceRef.current)
+    if (value) {
+      debounceRef.current = setTimeout(() => {
+        window.SC.search({ type: 'search', text: value })
+      }, 150)
+    } else {
+      window.SC.search({ type: 'clear' })
+    }
+  }, [])
+
+  const handleInput = (e) => {
+    const value = e.target.value
+    setText(value)
+    if (!value) {
+      clearTimeout(debounceRef.current)
+      setResult(null)
+    }
+    debouncedSearch(value)
   }
 
-  function handleShortCuts(event) {
-    const s = window.SC.search
-
-    switch (event.key) {
-      case 'Enter':
-        if (res.loading) break
-        setRes({ ...res, loading: true })
-        if (event.shiftKey)
-          s({ text: input, cancel: false, opts: { forward: false } })
-        else
-          s({ text: input, cancel: false, })
-        break;
-      case 'Escape':
-        if (input) {
-          setInput('')
-        }
-        else {
-          setRes({ current: 0, total: 0, loading: false })
-          s({ text: input, cancel: true })
-        }
-        break;
-      default:
-        break;
+  const handleKey = (e) => {
+    if (e.key === 'Enter') {
+      window.SC.search(e.shiftKey ? { type: 'prev' } : { type: 'next' })
+    } else if (e.key === 'Escape') {
+      if (text) {
+        setText('')
+        setResult(null)
+        window.SC.search({ type: 'clear' })
+      } else {
+        window.SC.search({ type: 'stop' })
+      }
     }
   }
 
-  return <div id="container">
-    <input autoFocus={true} ref={inputRef} onKeyDown={handleShortCuts} value={input} onInput={(e) => {
-      setInput(e.target.value)
-      e.target?.value && window.SC.search({ text: e.target.value, opts: { findNext: true } })
-    }} type="input" />
-    <div className="buttons">
-      <button disabled={res.loading} onClick={() => handleBtn(false)}><Icon icon="material-symbols:arrow-upward" /></button>
-      <button disabled={res.loading} onClick={() => handleBtn()}><Icon icon="material-symbols:arrow-downward" /></button>
+  return (
+    <div id="container">
+      <input autoFocus placeholder="页面内搜索" value={text} onInput={handleInput} onKeyDown={handleKey} />
+      <div className="buttons">
+        <button onClick={() => window.SC.search({ type: 'prev' })}>
+          <Icon icon="material-symbols:arrow-upward" />
+        </button>
+        <button onClick={() => window.SC.search({ type: 'next' })}>
+          <Icon icon="material-symbols:arrow-downward" />
+        </button>
+      </div>
+      <span className="indicator">
+        {result != null && result.totalMatches > 0
+          ? `${result.activeMatch}/${result.totalMatches}`
+          : '-/-'}
+      </span>
     </div>
-    <span className="indicator">
-      {
-        res.loading ?
-          <Icon className="rotate" icon="material-symbols:change-circle-outline" /> :
-          <span>{res.current}/{res.total}</span>
-      }
-    </span>
-  </div>
+  )
 }

@@ -1,4 +1,4 @@
-import { BrowserWindow, Notification, WebContents, dialog, shell } from "electron";
+import { BrowserWindow, Notification, WebContents, WebContentsView, dialog, shell } from "electron";
 import electronIsDev from "electron-is-dev";
 import { debug, warn, info } from "electron-log";
 import { copyFile, ensureDir, move, pathExists, readJson, readdir, writeFile } from "fs-extra";
@@ -6,7 +6,7 @@ import { join, basename } from "path";
 import { config } from "./config";
 import { Service, TWService } from "./services";
 import { FileInfo } from "./preloads/main";
-import { ISearchOpts } from "./api";
+import { SearchAction, SearchResult } from "./api";
 import { PathErr } from "./utils";
 import { type MenuWindow } from "./menu";
 
@@ -22,15 +22,14 @@ interface WikiInfo {
  */
 export class Wiki {
   static wikis: Set<Wiki> = new Set();
-  // 窗口聚焦则切换
-  static current: Wiki | null = null;
 
   dir: string;
   // 单文件不需要后端服务
   service: Service | undefined;
   wkType: WikiInfo;
   win: BrowserWindow;
-  searchWin: BrowserWindow | undefined;
+  searchView: WebContentsView | undefined;
+  private searchText = '';
   // 是否单文件版
 
   /**
@@ -50,7 +49,8 @@ export class Wiki {
     this.wkType = wikiType;
     this.win = window
     this.service = service
-    this.searchWin = undefined;
+    this.searchView = undefined;
+    this.searchText = '';
 
     // 防止误操作，始终绑定本身对象
     this.confWin.apply(this);
@@ -84,61 +84,69 @@ export class Wiki {
   }
 
   /**
-   * 跟据 resized 和 moved 事件重新计算搜索窗口位置
+   * 更新搜索视图的位置和大小
    */
-  moveSearchWin() {
-    if (!this.searchWin) return
+  updateSearchViewBounds() {
+    if (!this.searchView) return
 
-    const [px, py] = this.win.getPosition()
-    const [pw] = this.win.getSize()
-    const [cw] = this.searchWin.getSize()
-
-    this.searchWin.setPosition(px + pw - cw - 50, py + 50, false)
+    const [w] = this.win.getContentSize()
+    // 搜索框定位在右上角
+    this.searchView.setBounds({ x: w - 340 - 20, y: 10, width: 340, height: 40 })
   }
 
   /**
-   * 执行页面内搜索
+   * 处理搜索操作
    */
-  search(opt: ISearchOpts) {
-    console.log(opt)
-    if (opt.cancel || !opt.text) {
-      this.searchToggle(false)
-      this.win.webContents.stopFindInPage("clearSelection")
-    } else {
-      this.win.webContents.findInPage(opt.text, opt.opts)
+  handleSearch(action: SearchAction) {
+    switch (action.type) {
+      case 'search':
+        this.searchText = action.text
+        this.win.webContents.findInPage(action.text, { matchCase: action.matchCase })
+        break
+      case 'next':
+        if (this.searchText)
+          this.win.webContents.findInPage(this.searchText, { forward: true, findNext: true })
+        break
+      case 'prev':
+        if (this.searchText)
+          this.win.webContents.findInPage(this.searchText, { forward: false, findNext: true })
+        break
+      case 'clear':
+        this.searchText = ''
+        this.win.webContents.stopFindInPage('clearSelection')
+        break
+      case 'stop':
+        this.searchText = ''
+        this.searchToggle(false)
+        this.win.webContents.stopFindInPage('clearSelection')
+        break
     }
   }
 
   /**
-   * 控制搜索窗口显示隐藏，懒加载实现
+   * 控制搜索视图显示隐藏
    */
   searchToggle(state: boolean) {
-    if (!this.searchWin) {
-      this.searchWin = new BrowserWindow({
-        width: 340,
-        height: 40,
-        resizable: false,
-        frame: false,
-        show: false,
-
-        parent: this.win,
-
+    if (!this.searchView) {
+      this.searchView = new WebContentsView({
         webPreferences: {
           preload: join(__dirname, "preloads", "search.js"),
+          transparent: true,
         },
       })
-
-      if (electronIsDev)
-        this.searchWin.loadURL("http://127.0.0.1:5173")
-      else
-        this.searchWin.loadFile(join(__dirname, "static", "index.html"))
+      this.win.contentView.addChildView(this.searchView)
+      if (electronIsDev) {
+        this.searchView.webContents.loadURL("http://localhost:5173")
+      } else {
+        this.searchView.webContents.loadFile(join(__dirname, "static", "index.html"))
+      }
     }
-
     if (state) {
-      this.moveSearchWin()
-      this.searchWin.show()
+      this.updateSearchViewBounds()
+      this.searchView.setVisible(true)
+      if (electronIsDev && !this.searchView.webContents.isDevToolsOpened()) this.searchView.webContents.openDevTools({mode: 'detach'})
     } else {
-      this.searchWin?.hide()
+      this.searchView?.setVisible(false)
       this.win.focus()
     }
   }
@@ -285,19 +293,23 @@ export class Wiki {
         defaultId: 0,
         message: "你似乎没有保存！",
       });
-      // 0 是去保存
       if (selected !== 0) event.preventDefault();
     });
 
-    // 自动调整搜索框位置，当心 this 问题
-    // resize 会有大小变动的 bug
-    this.win.on('resized', () => this.moveSearchWin())
-    this.win.on('moved', () => this.moveSearchWin())
-    // this.win.on('enter-full-screen', () => this.moveSearchWin())
-    // this.win.on('leave-full-screen', () => this.moveSearchWin())
+    // 窗口大小变化时更新搜索框位置（仅在可见时）
+    this.win.on('resize', () => {
+      if (this.searchView) {
+        this.updateSearchViewBounds()
+      }
+    })
 
     this.win.webContents.on('found-in-page', (_, res) => {
-      this.searchWin?.webContents.send('search:res', res)
+      const result: SearchResult = {
+        activeMatch: res.activeMatchOrdinal,
+        totalMatches: res.matches,
+        done: res.finalUpdate
+      }
+      this.searchView?.webContents.send('search:result', result)
     })
 
     // 关闭窗口之后也关闭服务（如果有）并移除窗口

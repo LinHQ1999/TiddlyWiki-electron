@@ -4,27 +4,37 @@ body {
     --icon-size: 20px;
 }
 
+body * {
+    box-sizing: border-box;
+}
+
 #container {
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     display: flex;
     height: 100vh;
     width: 100vw;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    padding: 0 8px;
+    overflow: auto;
+    backdrop-filter: blur(4px);
 }
 
 #container input {
-    border: none;
-    border-bottom: 1px solid gray;
+    border: 0.5px solid#dbdbdb;
     font-size: 18px;
-    height: 24px;
+    height: 28px;
     line-height: 18px;
-    margin-right: 4px;
+    padding: 0 8px;
     outline: none;
-    transition: all 250ms linear;
+    transition: all 150ms linear;
+    border-radius: 8px;
 }
 
-#container input:focus {
-    border-color: black;
+#container input:focus,
+#container input:hover {
+    border-color: darkslategray;
 }
 
 .buttons {

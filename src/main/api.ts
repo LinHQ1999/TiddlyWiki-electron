@@ -1,9 +1,4 @@
-import {
-  BrowserWindow,
-  FindInPageOptions,
-  ipcMain,
-  IpcMainEvent,
-} from "electron";
+import { ipcMain, IpcMainEvent } from "electron";
 import {
   copyFileSync,
   writeFile,
@@ -13,17 +8,19 @@ import {
 import { FileInfo } from "./preloads/main";
 import { Wiki } from "./wiki";
 
-export interface ISearchRes {
-  requestId: number,
-  activeMatchOrdinal: number,
-  matches: number,
-  finalUpdate: boolean
-}
+// 搜索操作类型
+export type SearchAction =
+  | { type: 'search'; text: string; matchCase?: boolean }
+  | { type: 'next' }
+  | { type: 'prev' }
+  | { type: 'clear' }
+  | { type: 'stop' }
 
-export interface ISearchOpts {
-  text: string,
-  cancel: boolean,
-  opts: FindInPageOptions
+// 搜索结果
+export interface SearchResult {
+  activeMatch: number
+  totalMatches: number
+  done: boolean
 }
 
 /**
@@ -100,10 +97,8 @@ export function InitAPI() {
     ev.returnValue = Wiki.bySender(ev.sender)?.alert(msg) == 0;
   });
 
-  /**
-   * 页面内搜索，代偿浏览器
-   */
-  ipcMain.on('search', (ev: IpcMainEvent, action: ISearchOpts) => {
-    Wiki.byWindow(BrowserWindow.fromWebContents(ev.sender)?.getParentWindow() as BrowserWindow)?.search(action)
+  // 页面内搜索
+  ipcMain.on('search', (ev, action: SearchAction) => {
+    Wiki.bySender(ev.sender)?.handleSearch(action)
   })
 }

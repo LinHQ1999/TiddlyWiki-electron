@@ -1,13 +1,15 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ISearchOpts, ISearchRes } from "../api";
+import type { SearchAction, SearchResult } from "../api";
 
-export const api = {
-  search: (opt: ISearchOpts) => {
-    ipcRenderer.send("search", opt)
-  },
-  onSearch: (cb: (res: ISearchRes) => void) => {
-    ipcRenderer.on("search:res", (_, res: ISearchRes) => cb(res))
+const api = {
+  search: (action: SearchAction) => ipcRenderer.send('search', action),
+  onResult: (cb: (res: SearchResult) => void) => {
+    const handler = (_: unknown, res: SearchResult) =>  {
+      cb(res)
+    } 
+    ipcRenderer.on('search:result', handler)
+    return () => ipcRenderer.removeListener('search:result', handler)
   }
-};
+}
 
-contextBridge.exposeInMainWorld("SC", api);
+contextBridge.exposeInMainWorld('SC', api)
