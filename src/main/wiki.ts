@@ -144,6 +144,7 @@ export class Wiki {
     if (state) {
       this.updateSearchViewBounds()
       this.searchView.setVisible(true)
+      this.searchView.webContents.focus()
       if (electronIsDev && !this.searchView.webContents.isDevToolsOpened()) this.searchView.webContents.openDevTools({mode: 'detach'})
     } else {
       this.searchView?.setVisible(false)
