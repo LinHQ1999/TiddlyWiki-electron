@@ -9,8 +9,26 @@
 </head>
 
 <body>
-    <div id="root"></div>
-    <script type="module" src="main.jsx"></script>
+    <div id="container" x-data="searchApp()">
+        <input
+            autofocus
+            placeholder="页面内搜索"
+            x-model="text"
+            @input="handleInput"
+            @keydown="handleKey"
+        />
+        <div class="buttons">
+            <button @click="searchPrev()">
+                <iconify-icon icon="lucide:chevron-up"></iconify-icon>
+            </button>
+            <button @click="searchNext()">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </button>
+        </div>
+        <span class="indicator" x-text="indicatorText"></span>
+    </div>
+
+    <script type="module" src="main.js"></script>
 </body>
 
 </html>
