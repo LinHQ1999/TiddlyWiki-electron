@@ -21,6 +21,7 @@ export interface SearchResult {
   activeMatch: number
   totalMatches: number
   done: boolean
+  text?: string // 仅在恢复搜索状态时提供
 }
 
 /**

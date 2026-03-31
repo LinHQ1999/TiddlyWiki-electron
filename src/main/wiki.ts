@@ -30,6 +30,7 @@ export class Wiki {
   win: BrowserWindow;
   searchView: WebContentsView | undefined;
   private searchText = '';
+  private lastSearchResult: SearchResult | null = null;
   // 是否单文件版
 
   /**
@@ -101,22 +102,22 @@ export class Wiki {
     switch (action.type) {
       case 'search':
         this.searchText = action.text
-        this.win.webContents.findInPage(action.text, { matchCase: action.matchCase })
+        this.win.webContents.findInPage(action.text, { matchCase: action.matchCase, findNext: true })
         break
       case 'next':
         if (this.searchText)
-          this.win.webContents.findInPage(this.searchText, { forward: true, findNext: true })
+          this.win.webContents.findInPage(this.searchText, { forward: true })
         break
       case 'prev':
         if (this.searchText)
-          this.win.webContents.findInPage(this.searchText, { forward: false, findNext: true })
+          this.win.webContents.findInPage(this.searchText, { forward: false })
         break
       case 'clear':
         this.searchText = ''
+        this.lastSearchResult = null
         this.win.webContents.stopFindInPage('clearSelection')
         break
       case 'stop':
-        this.searchText = ''
         this.searchToggle(false)
         this.win.webContents.stopFindInPage('clearSelection')
         break
@@ -145,6 +146,9 @@ export class Wiki {
       this.updateSearchViewBounds()
       this.searchView.setVisible(true)
       this.searchView.webContents.focus()
+      if (this.searchText) {
+        this.searchView.webContents.send('search:result', { ...this.lastSearchResult, text: this.searchText })
+      }
       if (electronIsDev && !this.searchView.webContents.isDevToolsOpened()) this.searchView.webContents.openDevTools({mode: 'detach'})
     } else {
       this.searchView?.setVisible(false)
@@ -310,6 +314,7 @@ export class Wiki {
         totalMatches: res.matches,
         done: res.finalUpdate
       }
+      this.lastSearchResult = result
       this.searchView?.webContents.send('search:result', result)
     })
 

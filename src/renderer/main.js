@@ -13,7 +13,10 @@ Alpine.data('searchApp', () => ({
   },
 
   init() {
-    this.cancelResult = window.SC?.onResult?.(res => this.result = res)
+    this.cancelResult = window.SC?.onResult?.(res => {
+      this.result = res
+      if (res.text) this.text = res.text
+    })
   },
 
   destroy() {
@@ -36,10 +39,9 @@ Alpine.data('searchApp', () => ({
     if (e.key === 'Enter') {
       window.SC.search(e.shiftKey ? { type: 'prev' } : { type: 'next' })
     } else if (e.key === 'Escape') {
-      if (this.text) {
-        this.text = ''
-        this.result = null
-        window.SC.search({ type: 'clear' })
+      const input = this.$refs.searchInput
+      if (this.text && (input.selectionStart !== 0 || input.selectionEnd !== this.text.length)) {
+        input.select()
       } else {
         window.SC.search({ type: 'stop' })
       }
