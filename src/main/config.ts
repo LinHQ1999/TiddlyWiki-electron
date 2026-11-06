@@ -53,7 +53,7 @@ class Config {
     return await pathExists(tw) ? tw : undefined;
   }
 
-  set tw(path: string | undefined) {
+  set tw(path: string) {
     this.store.set("tw", path);
   }
 

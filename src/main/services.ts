@@ -1,7 +1,6 @@
-import { info, debug } from "electron-log";
+import log, { info, debug } from "electron-log";
 import { config } from "./config";
 import { Notification, shell } from "electron";
-import { join } from "path/win32";
 import { UtilityProcess, utilityProcess } from "electron/main";
 
 interface Service {
@@ -29,9 +28,7 @@ class TWServices {
       const guide = new Notification({ title: "请执行 npm i -g tiddlywiki" });
       guide.show();
       guide.once("click", () =>
-        shell.openPath(
-          join(process.env.APPDATA ?? "", "td", "logs", "main.log"),
-        ),
+        shell.openPath(log.transports.file.getFile().path),
       );
       throw new Error("No tw detected!");
     }

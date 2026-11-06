@@ -5,7 +5,7 @@ export default defineConfig({
   root: "./src/renderer",
   base: "./",
   build: {
-    outDir: resolve(__dirname, "out", "static"),
+    outDir: resolve(import.meta.dirname, "out", "static"),
     sourcemap: true
   }
 })

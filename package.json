@@ -18,27 +18,25 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@rollup/plugin-typescript": "^12.3.0",
-    "@types/eslint__js": "^9.14.0",
+    "@rollup/plugin-typescript": "^12.3.1",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^25.5.0",
-    "@types/nodegit": "^0.28.11",
-    "electron": "^41.1.0",
-    "electron-builder": "^26.8.1",
-    "eslint": "^10.1.0",
+    "@types/node": "^26.6.6",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "eslint": "^10.14.0",
     "nodemon": "^3.1.14",
-    "postcss": "^8.5.8",
-    "typescript": "^6.0.2",
-    "typescript-eslint": "^8.57.2",
-    "vite": "^8.0.3"
+    "postcss": "^8.5.32",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6"
   },
   "dependencies": {
-    "alpinejs": "^3.15.9",
+    "alpinejs": "^3.17.5",
     "electron-is-dev": "^3.0.1",
-    "electron-log": "^5.4.3",
-    "electron-store": "^11.0.2",
-    "fs-extra": "^11.3.4",
-    "iconify-icon": "^3.0.2"
+    "electron-log": "^5.4.4",
+    "electron-store": "^12.0.0",
+    "fs-extra": "^11.4.1",
+    "iconify-icon": "^3.0.5"
   },
   "build": {
     "appId": "cn.linhq.td",

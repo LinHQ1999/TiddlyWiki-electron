@@ -30,6 +30,16 @@
 - 重载 Node.js TiddlyWiki 服务
 - 页面内搜索
 
+### Linux 专属
+
+启动时会自动追加以下 Chromium 参数（参考 [Arch Wiki](https://wiki.archlinux.org/title/Chromium)）：
+
+- VA-API 硬件加速：`AcceleratedVideoDecodeLinuxGL`、`AcceleratedVideoEncoder`、`VaapiIgnoreDriverChecks`
+- Vulkan 渲染：`Vulkan`、`DefaultANGLEVulkan`、`VulkanFromANGLE`
+- GTK4 输入法：`--gtk-version=4`
+
+硬件或驱动不支持时，可通过 `--disable-features` 关闭对应特性。
+
 ## 环境
 
 由于**没有**集成 tiddlywiki 本身，所以：

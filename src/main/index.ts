@@ -7,6 +7,7 @@ import { initMenu } from "./menu";
 import { TWService } from "./services";
 import { Wiki } from "./wiki";
 import { handlePathErr } from "./utils";
+import { applyLinuxFlags } from "./flags";
 import { env } from "process";
 import isDev from "electron-is-dev";
 
@@ -54,6 +55,9 @@ async function loadWiki() {
 
 (async () => {
   log.transports.file.level = (env.DEBUG || isDev) ? 'debug' : 'warn'
+
+  // 必须在 app ready 前追加 Linux 下的硬件加速和输入法参数
+  applyLinuxFlags();
 
   debug('应用启动')
 
