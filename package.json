@@ -1,6 +1,6 @@
 {
   "name": "td",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "TW 包装程序",
   "homepage": "https://gitee.com/linhq1999/td",
   "main": "out/index.js",
@@ -21,9 +21,11 @@
     "@rollup/plugin-typescript": "^12.3.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^26.6.6",
+    "alpinejs": "^3.17.5",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0",
     "eslint": "^10.14.0",
+    "iconify-icon": "^3.0.5",
     "nodemon": "^3.1.14",
     "postcss": "^8.5.32",
     "typescript": "^6.0.3",
@@ -31,18 +33,20 @@
     "vite": "^8.3.6"
   },
   "dependencies": {
-    "alpinejs": "^3.17.5",
     "electron-is-dev": "^3.0.1",
     "electron-log": "^5.4.4",
     "electron-store": "^12.0.0",
-    "fs-extra": "^11.4.1",
-    "iconify-icon": "^3.0.5"
+    "fs-extra": "^11.4.1"
   },
   "build": {
     "appId": "cn.linhq.td",
     "productName": "td",
     "files": [
       "out"
+    ],
+    "electronLanguages": [
+      "zh_CN",
+      "en"
     ],
     "win": {
       "icon": "./build/icon.png",

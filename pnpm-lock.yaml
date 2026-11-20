@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      alpinejs:
-        specifier: ^3.17.5
-        version: 3.17.5
       electron-is-dev:
         specifier: ^3.0.1
         version: 3.0.1
@@ -23,9 +20,6 @@ importers:
       fs-extra:
         specifier: ^11.4.1
         version: 11.4.1
-      iconify-icon:
-        specifier: ^3.0.5
-        version: 3.0.5
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -39,6 +33,9 @@ importers:
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
+      alpinejs:
+        specifier: ^3.17.5
+        version: 3.17.5
       electron:
         specifier: ^45.2.3
         version: 45.2.3
@@ -48,6 +45,9 @@ importers:
       eslint:
         specifier: ^10.14.0
         version: 10.14.0(jiti@2.7.0)
+      iconify-icon:
+        specifier: ^3.0.5
+        version: 3.0.5
       nodemon:
         specifier: ^3.1.14
         version: 3.1.14

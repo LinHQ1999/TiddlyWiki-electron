@@ -1,8 +1,8 @@
 import { app, BrowserWindow, Notification, WebContents, WebContentsView, dialog, shell } from "electron";
 import electronIsDev from "electron-is-dev";
 import { debug, warn, info } from "electron-log";
-import { copyFile, ensureDir, move, pathExists, readJson, readdir, writeFile } from "fs-extra";
-import { join, basename } from "path";
+import { copyFile, ensureDir, move, pathExists, readJson, readdir, realpath, writeFile } from "fs-extra";
+import { join, basename, resolve } from "path";
 import { config } from "./config";
 import { Service, TWService } from "./services";
 import { FileInfo } from "./preloads/main";
@@ -331,6 +331,23 @@ export class Wiki {
   // Factory pattern to avoid asynchronous constructor
   static async bootstrap(dir: string, bindWin?: BrowserWindow | undefined, port = 11111): Promise<Wiki> {
     debug('Wiki bootstrap')
+    dir = await Wiki.normalizeDir(dir)
+
+    // 同一目录只允许一个窗口，重复打开时聚焦已有窗口
+    const opened = Wiki.findByDir(dir)
+    if (opened) {
+      warn(`${dir} 已打开，聚焦已有窗口`)
+      bindWin?.destroy()
+      if (opened.win.isMinimized()) opened.win.restore()
+      opened.win.show()
+      opened.win.focus()
+      new Notification({
+        title: "该 wiki 已打开",
+        body: dir,
+      }).show()
+      return opened
+    }
+
     const wkType = await Wiki.getWikiType(dir)
     let service: Service | undefined = undefined
 
@@ -385,6 +402,24 @@ export class Wiki {
     await refreshMenu()
     debug('Wiki bootstrap done')
     return wiki
+  }
+
+  /**
+   * 规范化为绝对真实路径，避免软链、相对路径被当作不同目录
+   */
+  static async normalizeDir(dir: string): Promise<string> {
+    try {
+      return await realpath(dir)
+    } catch {
+      return resolve(dir)
+    }
+  }
+
+  static findByDir(dir: string): Wiki | undefined {
+    for (const wiki of Wiki.wikis) {
+      if (wiki.dir === dir) return wiki
+    }
+    return undefined
   }
 
   /**
