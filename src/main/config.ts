@@ -16,6 +16,8 @@ interface Env {
   tw: string | undefined;
 
   recent: string[];
+  // 最后聚焦过的目录，启动时优先恢复
+  lastFocused: string | undefined;
 }
 
 const RECENT_LIMIT = 10;
@@ -30,6 +32,7 @@ class Config {
         os: platform(),
         tw: undefined,
         recent: [],
+        lastFocused: undefined,
       },
     });
 
@@ -77,6 +80,14 @@ class Config {
 
   clearRecent() {
     this.store.set("recent", []);
+  }
+
+  get LastFocused(): string | undefined {
+    return this.store.get("lastFocused");
+  }
+
+  set lastFocused(dir: string) {
+    this.store.set("lastFocused", dir);
   }
 }
 

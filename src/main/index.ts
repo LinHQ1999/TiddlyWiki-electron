@@ -16,12 +16,17 @@ async function loadWiki() {
     if (app.requestSingleInstanceLock()) {
       await app.whenReady()
       debug('appReady')
-      // 从 recent 列表找回第一条仍存在的目录直接恢复
+      // 优先恢复上次聚焦的目录，失效后再从 recent 列表中取第一条仍存在的
       let lastOpen: string | undefined
-      for (const dir of config.Recent) {
-        if (await pathExists(dir)) {
-          lastOpen = dir
-          break
+      const lastFocused = config.LastFocused
+      if (lastFocused && await pathExists(lastFocused)) {
+        lastOpen = lastFocused
+      } else {
+        for (const dir of config.Recent) {
+          if (await pathExists(dir)) {
+            lastOpen = dir
+            break
+          }
         }
       }
       // 列表为空或全部失效时弹打开对话框

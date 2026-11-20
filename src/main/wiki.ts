@@ -301,6 +301,11 @@ export class Wiki {
       if (selected !== 0) event.preventDefault();
     });
 
+    // 记住最后聚焦的窗口，下次启动时优先恢复
+    this.win.on('focus', () => {
+      config.lastFocused = this.dir
+    })
+
     // 窗口大小变化时更新搜索框位置（仅在可见时）
     this.win.on('resize', () => {
       if (this.searchView) {
@@ -341,6 +346,7 @@ export class Wiki {
       if (opened.win.isMinimized()) opened.win.restore()
       opened.win.show()
       opened.win.focus()
+      config.lastFocused = dir
       new Notification({
         title: "该 wiki 已打开",
         body: dir,
@@ -397,6 +403,7 @@ export class Wiki {
 
     const wiki = new Wiki(dir, win, wkType, service)
     Wiki.wikis.add(wiki)
+    config.lastFocused = dir
     config.addRecent(dir)
     app.addRecentDocument(dir)
     await refreshMenu()
