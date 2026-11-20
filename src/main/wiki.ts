@@ -1,4 +1,4 @@
-import { BrowserWindow, Notification, WebContents, WebContentsView, dialog, shell } from "electron";
+import { app, BrowserWindow, Notification, WebContents, WebContentsView, dialog, shell } from "electron";
 import electronIsDev from "electron-is-dev";
 import { debug, warn, info } from "electron-log";
 import { copyFile, ensureDir, move, pathExists, readJson, readdir, writeFile } from "fs-extra";
@@ -8,7 +8,7 @@ import { Service, TWService } from "./services";
 import { FileInfo } from "./preloads/main";
 import { SearchAction, SearchResult } from "./api";
 import { PathErr } from "./utils";
-import { type MenuWindow } from "./menu";
+import { type MenuWindow, refreshMenu } from "./menu";
 
 interface WikiInfo {
   isSingle: boolean;
@@ -380,6 +380,9 @@ export class Wiki {
 
     const wiki = new Wiki(dir, win, wkType, service)
     Wiki.wikis.add(wiki)
+    config.addRecent(dir)
+    app.addRecentDocument(dir)
+    await refreshMenu()
     debug('Wiki bootstrap done')
     return wiki
   }

@@ -1,4 +1,6 @@
 import { dialog, Menu, Notification, shell, type MenuItemConstructorOptions, type MenuItem } from "electron";
+import { basename } from "path";
+import { pathExists } from "fs-extra";
 import { config } from "./config";
 import { Wiki } from "./wiki";
 import { handlePathErr } from "./utils";
@@ -7,7 +9,38 @@ import ElectronLog from "electron-log";
 
 export type MenuWindow = BaseWindow | undefined
 
-export const UniversalMenu: Array<MenuItemConstructorOptions> = [
+async function openWiki(dir: string) {
+  try {
+    // 不加 await 则捕获不到错误！
+    await Wiki.bootstrap(dir)
+  } catch (e) {
+    handlePathErr(e)
+  }
+}
+
+async function buildRecentSubmenu(): Promise<MenuItemConstructorOptions[]> {
+  const existing: string[] = []
+  for (const dir of config.Recent) {
+    if (await pathExists(dir)) existing.push(dir)
+  }
+  const items: MenuItemConstructorOptions[] = existing.map((dir) => ({
+    label: basename(dir),
+    toolTip: dir,
+    click: () => openWiki(dir)
+  }))
+  if (items.length === 0) items.push({ label: "（无记录）", enabled: false })
+  items.push({ type: "separator" }, {
+    label: "清空最近记录",
+    click() {
+      config.clearRecent()
+      refreshMenu()
+    },
+  })
+  return items
+}
+
+function buildBaseMenu(): Array<MenuItemConstructorOptions> {
+  return [
   {
     label: "文件",
     submenu: [
@@ -24,8 +57,7 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
               properties: ["openDirectory"],
             });
             if (selected.filePaths.length === 1) {
-              // 不加 await 则捕获不到错误！
-              await Wiki.bootstrap(selected.filePaths[0])
+              await openWiki(selected.filePaths[0])
             }
           } catch (e) {
             handlePathErr(e)
@@ -43,19 +75,6 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
           const wiki = Wiki.byWindow(win);
           if (wiki) {
             wiki.restart();
-          }
-        },
-      },
-      {
-        label: "设为默认",
-        async click(
-          _: MenuItem,
-          win: MenuWindow,
-        ) {
-          if (!win) return
-          const wiki = Wiki.byWindow(win);
-          if (wiki) {
-            config.Opened = wiki.dir;
           }
         },
       },
@@ -131,9 +150,10 @@ export const UniversalMenu: Array<MenuItemConstructorOptions> = [
       { role: "reload" },
     ],
   },
-];
+  ]
+}
 
-const darwinMenu: typeof UniversalMenu = [
+const darwinMenu: Array<MenuItemConstructorOptions> = [
   {
     label: '编辑',
     submenu: [
@@ -164,8 +184,18 @@ const darwinMenu: typeof UniversalMenu = [
   }
 ]
 
-if (config.env.os.includes('darwin')) UniversalMenu.push(...darwinMenu)
+/**
+ * 菜单无法惰性生成，bootstrap 后整体重建
+ */
+export async function refreshMenu() {
+  const template = buildBaseMenu()
+  const recent = await buildRecentSubmenu()
+  const fileSubmenu = template[0].submenu as MenuItemConstructorOptions[]
+  fileSubmenu.splice(1, 0, { label: "最近打开", submenu: recent })
+  if (config.env.os.includes('darwin')) template.push(...darwinMenu)
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 export function initMenu() {
-  Menu.setApplicationMenu(Menu.buildFromTemplate(UniversalMenu));
+  return refreshMenu()
 }

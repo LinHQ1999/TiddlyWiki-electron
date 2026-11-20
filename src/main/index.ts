@@ -14,12 +14,18 @@ import isDev from "electron-is-dev";
 async function loadWiki() {
   try {
     if (app.requestSingleInstanceLock()) {
-      const lastOpen = config.Opened;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_, existsLast] = await Promise.all([app.whenReady(), pathExists(lastOpen)])
+      await app.whenReady()
       debug('appReady')
-      // 检查是否是初始状态或目录已变动
-      if (lastOpen === undefined || !existsLast) {
+      // 从 recent 列表找回第一条仍存在的目录直接恢复
+      let lastOpen: string | undefined
+      for (const dir of config.Recent) {
+        if (await pathExists(dir)) {
+          lastOpen = dir
+          break
+        }
+      }
+      // 列表为空或全部失效时弹打开对话框
+      if (lastOpen === undefined) {
         const win = Wiki.createWindow();
 
         // 这里允许重选
@@ -28,8 +34,7 @@ async function loadWiki() {
           const paths = selected.filePaths;
           if (paths.length === 1 && !selected.canceled) {
             try {
-              const first = await Wiki.bootstrap(paths[0], win);
-              config.Opened = first.dir
+              await Wiki.bootstrap(paths[0], win);
               break
             } catch (e) {
               handlePathErr(e)

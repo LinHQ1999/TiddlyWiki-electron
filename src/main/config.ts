@@ -15,8 +15,10 @@ interface Env {
   // tiddlywiki.js 路径
   tw: string | undefined;
 
-  opened: string;
+  recent: string[];
 }
+
+const RECENT_LIMIT = 10;
 
 class Config {
   // 持久化配置/状态
@@ -27,12 +29,12 @@ class Config {
       defaults: {
         os: platform(),
         tw: undefined,
-        opened: "",
+        recent: [],
       },
     });
 
     debug(this.store.store);
-    debug(this.Opened);
+    debug(this.Recent);
   }
 
   /**
@@ -64,12 +66,17 @@ class Config {
     return this.store.store;
   }
 
-  set Opened(dir: string) {
-    this.store.set("opened", dir);
+  get Recent(): string[] {
+    return this.store.get("recent");
   }
 
-  get Opened(): string {
-    return this.store.get("opened");
+  addRecent(dir: string) {
+    const recent = [dir, ...this.Recent.filter((d) => d !== dir)].slice(0, RECENT_LIMIT);
+    this.store.set("recent", recent);
+  }
+
+  clearRecent() {
+    this.store.set("recent", []);
   }
 }
 
